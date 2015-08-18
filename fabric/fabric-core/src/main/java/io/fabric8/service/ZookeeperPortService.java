@@ -78,26 +78,37 @@ public final class ZookeeperPortService extends AbstractComponent implements Por
         assertValid();
         Lease lease = null;
         try {
+            LOGGER.info("ENTESB-3827: acquiring lock");
             lease = interProcessLock.acquire(60, TimeUnit.SECONDS);
             if (lease != null) {
+                LOGGER.info("ENTESB-3827: lock acquired");
                 int port = lookupPort(container, pid, key);
                 if (port > 0 && (port >= fromPort && port <= toPort)) {
                     //if the previous port isn't in the port range then
                     //get one from the port range
+                    LOGGER.info("ENTESB-3827: port found in range {}-{}: {}", fromPort, toPort, port);
                     return port;
+                } else {
+                    LOGGER.info("ENTESB-3827: port not found in range {}-{}: {}", fromPort, toPort, port);
                 }
                 Set<Integer> boundPorts = findUsedPortByHost(container, lease);
+                LOGGER.info("ENTESB-3827: ports used by host: {}", boundPorts.toString());
+                LOGGER.info("ENTESB-3827: excludes: {}", excludes);
                 boundPorts.addAll(excludes);
 
                 for (port = fromPort; port <= toPort; port++) {
                     if (!boundPorts.contains(port)) {
-                        if(Ports.isPortFree(port)) {
+                        if (Ports.isPortFree(port)) {
+                            LOGGER.info("ENTESB-3827: port is free: {}", port);
                             registerPort(container, pid, key, port, lease);
                             return port;
+                        } else {
+                            LOGGER.info("ENTESB-3827: port is not free: {}", port);
                         }
                     }
                 }
             } else {
+                LOGGER.info("ENTESB-3827: lock not acquired");
                 throw new FabricException("Could not acquire port lock for pid " + pid);
             }
             throw new FabricException("Could not find port within range [" + fromPort + "," + toPort + "] for pid " + pid);
@@ -294,9 +305,13 @@ public final class ZookeeperPortService extends AbstractComponent implements Por
         assertValid();
         int port = 0;
         String path = ZkPath.PORTS_CONTAINER_PID_KEY.getPath(container.getId(), pid, key);
+        LOGGER.info("ENTESB-3827: zk path: {}", path);
         try {
             if (exists(curator.get(), path) != null) {
                 port = Integer.parseInt(getStringData(curator.get(), path));
+                LOGGER.info("ENTESB-3827: found port: {}", port);
+            } else {
+                LOGGER.info("ENTESB-3827: port not found");
             }
         } catch (InterruptedException ex) {
             cleanUpDirtyZKNodes(interProcessLock);
