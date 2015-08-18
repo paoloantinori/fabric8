@@ -849,40 +849,46 @@ public class Deployer {
             callback.phase("finalizing (starting bundles)");
             print("Starting bundles:", display);
 
-            while (!toStart.isEmpty()) {
-                List<Bundle> bs = getBundlesToStart(toStart, dstate.serviceBundle);
+            ClassLoader tccl = Thread.currentThread().getContextClassLoader();
+            try {
+                Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
+                while (!toStart.isEmpty()) {
+                    List<Bundle> bs = getBundlesToStart(toStart, dstate.serviceBundle);
 
-                for (final Bundle bundle : bs) {
-                    print("  " + bundle.getSymbolicName() + " / " + bundle.getVersion(), display);
+                    for (final Bundle bundle : bs) {
+                        print("  " + bundle.getSymbolicName() + " / " + bundle.getVersion(), display);
 
-                    List<Future<Void>> futures = deploymentsExecutor.invokeAll(
-                            Arrays.asList(
-                                    new Callable<Void>() {
-                                        @Override
-                                        public Void call() throws Exception {
-                                            try {
-                                                LOGGER.info("Scheduled start for bundle:" + bundle.getSymbolicName() + " with a timeout limit of " + request.bundleStartTimeout + " seconds");
-                                                callback.startBundle(bundle);
+                        List<Future<Void>> futures = deploymentsExecutor.invokeAll(
+                                Arrays.asList(
+                                        new Callable<Void>() {
+                                            @Override
+                                            public Void call() throws Exception {
+                                                try {
+                                                    LOGGER.info("Scheduled start for bundle:" + bundle.getSymbolicName() + " with a timeout limit of " + request.bundleStartTimeout + " seconds");
+                                                    callback.startBundle(bundle);
 
-                                            } catch (BundleException e) {
-                                                exceptions.add(e);
+                                                } catch (BundleException e) {
+                                                    exceptions.add(e);
+                                                }
+                                                return null;
                                             }
-                                            return null;
                                         }
-                                    }
-                            ), request.bundleStartTimeout, TimeUnit.SECONDS);
-                    // synch on Future's output, limited by the TimeUnit above
-                    for (Future<Void> f : futures) {
-                        try {
-                            f.get();
-                        } catch (CancellationException e) {
-                            exceptions.add(new BundleException("Unable to start bundle [" + bundle.getSymbolicName() + "] within " + request.bundleStartTimeout + " seconds"));
+                                ), request.bundleStartTimeout, TimeUnit.SECONDS);
+                        // synch on Future's output, limited by the TimeUnit above
+                        for (Future<Void> f : futures) {
+                            try {
+                                f.get();
+                            } catch (CancellationException e) {
+                                exceptions.add(new BundleException("Unable to start bundle [" + bundle.getSymbolicName() + "] within " + request.bundleStartTimeout + " seconds"));
+                            }
                         }
+
+                        toStart.remove(bundle);
                     }
 
-                    toStart.remove(bundle);
                 }
-
+            } finally {
+                Thread.currentThread().setContextClassLoader(tccl);
             }
             deploymentsExecutor.shutdown();
 
