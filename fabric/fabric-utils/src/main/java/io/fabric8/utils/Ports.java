@@ -26,7 +26,12 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Ports {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(Ports.class);
 
     public static final int DEFAULT_HOST_SSH_PORT = 22;
     public static final int DEFAULT_KARAF_SSH_PORT = 8101;
@@ -181,6 +186,7 @@ public class Ports {
             ds.setReuseAddress(true);
             return true;
         } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
         } finally {
             if (ds != null) {
                 ds.close();
