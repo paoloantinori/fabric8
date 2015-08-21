@@ -22,6 +22,9 @@ import static io.fabric8.zookeeper.utils.ZooKeeperUtils.getChildren;
 import static io.fabric8.zookeeper.utils.ZooKeeperUtils.getStringData;
 import static io.fabric8.zookeeper.utils.ZooKeeperUtils.setData;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -109,8 +112,10 @@ public final class ZookeeperPortService extends AbstractComponent implements Por
                 }
             } else {
                 LOGGER.info("ENTESB-3827: lock not acquired");
+                diag();
                 throw new FabricException("Could not acquire port lock for pid " + pid);
             }
+            diag();
             throw new FabricException("Could not find port within range [" + fromPort + "," + toPort + "] for pid " + pid);
         } catch (InterruptedException ex) {
             cleanUpDirtyZKNodes(interProcessLock);
@@ -119,6 +124,34 @@ public final class ZookeeperPortService extends AbstractComponent implements Por
             throw FabricException.launderThrowable(ex);
         } finally {
             releaseLock(lease);
+        }
+    }
+
+    private void diag() {
+        try {
+            Process p = Runtime.getRuntime().exec("ss -lntp");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            output(reader);
+            p = Runtime.getRuntime().exec("ps -ef");
+            reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            output(reader);
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void output(BufferedReader reader) throws IOException {
+        try {
+            StringBuffer sb = new StringBuffer();
+            while (true) {
+                String line = reader.readLine();
+                if (line == null) break;
+                sb.append(line);
+            }
+            System.out.println(sb.toString());
+            LOGGER.info(sb.toString());
+        } catch (Exception ignore) {
+        } finally {
+            reader.close();
         }
     }
 
