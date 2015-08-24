@@ -145,7 +145,7 @@ public final class ZookeeperPortService extends AbstractComponent implements Por
             while (true) {
                 String line = reader.readLine();
                 if (line == null) break;
-                sb.append(line);
+                sb.append(line).append("\n");
             }
             System.out.println(sb.toString());
             LOGGER.info(sb.toString());
