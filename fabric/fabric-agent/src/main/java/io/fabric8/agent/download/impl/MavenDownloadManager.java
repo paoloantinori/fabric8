@@ -31,10 +31,14 @@ import io.fabric8.agent.download.Downloader;
 import io.fabric8.agent.download.StreamProvider;
 import io.fabric8.common.util.MultiException;
 import io.fabric8.maven.MavenResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static io.fabric8.agent.download.impl.DownloadManagerHelper.stripUrl;
 
 public class MavenDownloadManager implements DownloadManager {
+
+    public static Logger LOG = LoggerFactory.getLogger(MavenDownloadManager.class);
 
     private final MavenResolver mavenResolver;
 
@@ -131,6 +135,7 @@ public class MavenDownloadManager implements DownloadManager {
                     task = prev;
                 }
                 pending++;
+                LOG.info("GG: download(" + location + "), pending: " + pending);
                 allPending++;
             }
             final AbstractDownloadTask downloadTask = task;
@@ -155,6 +160,7 @@ public class MavenDownloadManager implements DownloadManager {
                             if (--pending == 0) {
                                 lock.notifyAll();
                             }
+                            LOG.info("GG: download(" + location + ") complete, pending: " + pending);
                         }
                     }
                 }
