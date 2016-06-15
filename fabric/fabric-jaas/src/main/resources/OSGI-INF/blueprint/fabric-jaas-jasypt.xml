@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="
+           http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd">
+
+
+    <bean id="encryptor"
+          class="org.jasypt.encryption.pbe.StandardPBEStringEncryptor">
+        <!--Injects the Encryptor Configuration object as an OSGi service so that it can be completely replaced by user bundles-->
+        <property name="config" ref="encryptorConfigRef" />
+    </bean>
+
+    <!--Instantiate the ConfigAdmin interceptor to decrypt tokens on the fly-->
+    <bean id="configPlugin"
+          class="io.fabric8.jaas.EncryptableConfigurationPlugin">
+        <property name="encryptor" ref="encryptor"/>
+    </bean>
+
+    <!--Expose all the objects used for encryption as OSGi services, in case subcomponent may need them.-->
+    <service id="ConfigPluginService" ref="configPlugin"
+             interface="org.osgi.service.cm.ConfigurationPlugin"/>
+
+
+    <service id="EncryptorService" ref="encryptor"
+             interface="org.jasypt.encryption.StringEncryptor" />
+
+    <!--Injects the Encryptor Configuration object as an OSGi service so that it can be completely replaced by user bundles-->
+    <reference id="encryptorConfigRef" interface="org.jasypt.encryption.pbe.config.PBEConfig"  />
+
+</blueprint>

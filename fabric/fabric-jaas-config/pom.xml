@@ -25,49 +25,21 @@
     <version>1.2.0.redhat-630-SNAPSHOT</version>
   </parent>
 
-  <artifactId>fabric-jaas</artifactId>
+  <artifactId>fabric-jaas-config</artifactId>
   <packaging>bundle</packaging>
 
-  <name>Fabric8 :: JAAS</name>
+  <name>Fabric8 :: JAAS Config</name>
 
   <properties>
     <fuse.osgi.import>
-      org.apache.felix.gogo.commands;resolution:=optional,
-      org.apache.felix.service.command;resolution:=optional,
-      org.apache.karaf.jaas.config,
-      org.apache.karaf.jaas.modules,
-      org.apache.karaf.jaas.modules.encryption,
-      org.apache.karaf.jaas.modules.properties,
       *
     </fuse.osgi.import>
-    <fuse.osgi.export>
-      io.fabric8.jaas
-    </fuse.osgi.export>
-    <fuse.osgi.private.pkg>
-      org.apache.felix.utils.properties;-split-package:=merge-first
-    </fuse.osgi.private.pkg>
   </properties>
 
   <dependencies>
     <dependency>
       <groupId>org.apache.felix</groupId>
       <artifactId>org.apache.felix.utils</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fabric8</groupId>
-      <artifactId>fabric-zookeeper</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fabric8</groupId>
-      <artifactId>fabric-jaas-config</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fabric8</groupId>
-      <artifactId>fabric-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>io.fabric8</groupId>
-      <artifactId>fabric-core</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.karaf.jaas</groupId>
@@ -87,12 +59,6 @@
     </dependency>
 
     <!-- Provided Dependencies -->
-    <dependency>
-      <groupId>org.apache.felix</groupId>
-      <artifactId>org.apache.felix.scr.annotations</artifactId>
-      <scope>provided</scope>
-    </dependency>
-
     <!--test-->
     <dependency>
       <groupId>org.apache.felix</groupId>
@@ -118,19 +84,6 @@
             <Gravia-Enabled>true</Gravia-Enabled>
           </instructions>
         </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.felix</groupId>
-        <artifactId>maven-scr-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>generate-scr-scrdescriptor</id>
-            <phase>prepare-package</phase>
-            <goals>
-              <goal>scr</goal>
-            </goals>
-          </execution>
-        </executions>
       </plugin>
     </plugins>
   </build>

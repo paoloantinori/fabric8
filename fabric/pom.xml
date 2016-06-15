@@ -72,6 +72,7 @@
         <module>fabric-groovy</module>
         <module>fabric-groups</module>
         <module>fabric-jaas</module>
+        <module>fabric-jaas-config</module>
         <module>fabric-jolokia</module>
         <module>fabric-jolokia-client</module>
         <module>fabric-ldap</module>

@@ -1,0 +1,46 @@
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="
+       http://www.osgi.org/xmlns/blueprint/v1.0.0
+       http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+       http://camel.apache.org/schema/blueprint
+       http://camel.apache.org/schema/blueprint/camel-blueprint.xsd"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+           xmlns:enc="http://karaf.apache.org/xmlns/jasypt/v1.0.0">
+
+    <!--
+    Inject encryptor configuration defined in a JBoss Fuse platform component.
+    This is required so that the encryption configuration used by the enc: namespace handler is the same used in pure ConfigAdmin ;
+
+    IMPORTANT:
+    enc:property-placeholder node must defined before cm:property-placeholder node
+    -->
+    <reference id="encryptorRef" interface="org.jasypt.encryption.StringEncryptor" />
+    <enc:property-placeholder encryptor-ref="encryptorRef"/>
+
+    <!--
+    Bind this Blueprint file to a specific ConfigAdmin PID as usual.
+    The encoded token has to be obtained from JBoss Fuse `jasypt:encrypt-config-admin` CLI command invocation.
+
+    NOTE:
+    The current configuration of the platform Encryptor produces different tokens for each invocation for the same input.
+    -->
+    <cm:property-placeholder persistent-id="my" update-strategy="reload"  placeholder-prefix="{{" placeholder-suffix="}}" >
+        <cm:default-properties>
+            <cm:property name="secret" value="ENC(QjVpvG2nlT856r7Qn3Z0wQ==)"/>
+        </cm:default-properties>
+    </cm:property-placeholder>
+
+    <!--
+    Refer to the ConfigAdmin property you are interested into, in your Camel route.
+    Remember to use the special placeholder prefixes to not clash with Camel internal placeholders features.
+    -->
+    <camelContext xmlns="http://camel.apache.org/schema/blueprint" depends-on="encryptorRef">
+        <route>
+            <from uri="timer://foo?period=5000"/>
+            <log message="Decrypted Secret: {{secret}}"/>
+        </route>
+    </camelContext>
+
+</blueprint>
+

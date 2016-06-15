@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    Licensed to the Apache Software Foundation (ASF) under one or more
+    contributor license agreements.  See the NOTICE file distributed with
+    this work for additional information regarding copyright ownership.
+    The ASF licenses this file to You under the Apache License, Version 2.0
+    (the "License"); you may not use this file except in compliance with
+    the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="
+           http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd"
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
+           xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0">
+
+    <!-- OSGi specific Config Admin -->
+    <ext:property-placeholder placeholder-prefix="$[" placeholder-suffix="]"/>
+
+<!--
+Specify your custom configuration for the platform encryption service, used to transparently decrypt ConfigAdmin entries.
+Mind that deploying a configuration not in sync with previously encrypted values might lead to token that no longer decrypt correctly.
+-->
+    <bean id="encryptionConfigBean" class="org.jasypt.encryption.pbe.config.EnvironmentStringPBEConfig">
+        <property name="algorithm" value="PBEWithMD5AndDES"/>
+        <!-- something you might want to change is the configuration of where to get the seed from like one of the following instead of the `password` strategy -->
+<!--    
+        <property name="passwordEnvName" value="NAME_OF_THE_ENV_VAR_HERE"/>
+        <property name="passwordSysPropertyName" value="NAME_OF_THE_JAVA_SYS_PROP_HERE"/> 
+-->
+        <property name="password" value="CIAO"/>
+    </bean>
+
+<!--
+Play with service rankings. The default PBEConfig is defined in io.fabric8.fabric-jaas bundle.
+-->
+
+    <service id="EncryptionConfigService" ref="encryptionConfigBean"
+             interface="org.jasypt.encryption.pbe.config.PBEConfig" ranking="100" />
+
+</blueprint>
