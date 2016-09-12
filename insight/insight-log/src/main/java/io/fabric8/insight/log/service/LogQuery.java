@@ -15,40 +15,33 @@
  */
 package io.fabric8.insight.log.service;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-import io.fabric8.common.util.JMXUtils;
 import io.fabric8.insight.log.LogFilter;
 import io.fabric8.insight.log.LogResults;
 import io.fabric8.insight.log.service.support.MavenCoordinates;
 import io.fabric8.insight.log.support.LogQuerySupport;
 import io.fabric8.insight.log.support.Predicate;
-import org.apache.felix.scr.annotations.*;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferenceCardinality;
+import org.apache.felix.scr.annotations.ReferencePolicy;
 import org.apache.karaf.shell.log.LruList;
 import org.apache.karaf.shell.log.VmLogAppender;
 import org.ops4j.pax.logging.spi.PaxAppender;
 import org.ops4j.pax.logging.spi.PaxLoggingEvent;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleEvent;
-import org.osgi.framework.BundleListener;
-import org.osgi.util.tracker.ServiceTracker;
-import org.osgi.util.tracker.ServiceTrackerCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
+import java.io.IOException;
 
 /**
  * An implementation of {@link LogQueryMBean} using the embedded pax appender used by karaf
  */
-@Component
+@Component(name = "io.fabric8.insight.log.service.LogQuery", label = "Fabric8 Insight LogQuery", metatype = true, immediate = true )
 public class LogQuery extends LogQuerySupport implements LogQueryMBean {
     private transient Logger LOG = LoggerFactory.getLogger(LogQuery.class);
-
-    @Reference
-    private MBeanServer mbeanServer;
 
     @Reference(referenceInterface = PaxAppender.class, policy = ReferencePolicy.DYNAMIC, cardinality = ReferenceCardinality.OPTIONAL_MULTIPLE, bind = "bindAppender", unbind = "unbindAppender")
     private VmLogAppender appender;
@@ -59,12 +52,12 @@ public class LogQuery extends LogQuerySupport implements LogQueryMBean {
 
     @Activate
     public void activate() {
-        registerMBeanServer(mbeanServer);
+        registerMBeanServer(getMbeanServer());
     }
 
     @Deactivate
     public void deactivate() {
-        unregisterMBeanServer(mbeanServer);
+        unregisterMBeanServer(getMbeanServer());
     }
 
     public void bindAppender(PaxAppender paxAppender) {
@@ -91,7 +84,7 @@ public class LogQuery extends LogQuerySupport implements LogQueryMBean {
     }
 
     @Override
-    public  LogResults queryLogResults(LogFilter filter) {
+    public LogResults queryLogResults(LogFilter filter) {
         Predicate<PaxLoggingEvent> predicate = Logs.createPredicate(filter);
         int count = -1;
         if (filter != null) {
@@ -109,7 +102,7 @@ public class LogQuery extends LogQuerySupport implements LogQueryMBean {
         if (appender != null) {
             LruList events = appender.getEvents();
             if (events != null) {
-                Iterable<PaxLoggingEvent> iterable =  events.getElements();
+                Iterable<PaxLoggingEvent> iterable = events.getElements();
                 if (iterable != null) {
                     int matched = 0;
                     for (PaxLoggingEvent event : iterable) {

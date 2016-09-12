@@ -16,9 +16,17 @@
 package io.fabric8.insight.log.support;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.fabric8.api.scr.AbstractComponent;
+import io.fabric8.api.scr.ValidatingReference;
 import io.fabric8.common.util.Strings;
 import io.fabric8.insight.log.LogFilter;
 import io.fabric8.insight.log.LogResults;
+import org.apache.felix.scr.annotations.Activate;
+import org.apache.felix.scr.annotations.Component;
+import org.apache.felix.scr.annotations.Deactivate;
+import org.apache.felix.scr.annotations.Reference;
+import org.apache.felix.scr.annotations.ReferencePolicy;
+import org.apache.felix.scr.annotations.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +39,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
-import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -43,12 +50,15 @@ import java.util.jar.JarFile;
 /**
  * Base class for any {@link LogQuerySupportMBean} implementation
  */
-public abstract class LogQuerySupport implements LogQuerySupportMBean {
+@Component(name = "io.fabric8.insight.jmx.integration", label = "Fabric8 MBean Server Listener for Insight")
+@Service(LogQuerySupportMBean.class)
+public abstract class LogQuerySupport extends AbstractComponent implements LogQuerySupportMBean  {
     private static final transient Logger LOG = LoggerFactory.getLogger(LogQuerySupport.class);
 
     protected ObjectMapper mapper = new ObjectMapper();
     private ObjectName mbeanName;
-    private MBeanServer mbeanServer;
+    @Reference(referenceInterface = MBeanServer.class, bind = "bindMBeanServer", unbind = "unbindMBeanServer")
+    protected final ValidatingReference<MBeanServer> mbeanServer = new ValidatingReference<MBeanServer>();
     private String hostName;
 
     protected LogQuerySupport() {
@@ -142,14 +152,7 @@ public abstract class LogQuerySupport implements LogQuerySupportMBean {
     }
 
     public MBeanServer getMbeanServer() {
-        if (mbeanServer == null) {
-            mbeanServer = ManagementFactory.getPlatformMBeanServer();
-        }
-        return mbeanServer;
-    }
-
-    public void setMbeanServer(MBeanServer mbeanServer) {
-        this.mbeanServer = mbeanServer;
+        return mbeanServer.get();
     }
 
     public String getHostName() {
@@ -323,6 +326,24 @@ public abstract class LogQuerySupport implements LogQuerySupportMBean {
         } else {
             return path;
         }
+    }
+
+     @Activate
+    void activate() {
+        activateComponent();
+    }
+
+    @Deactivate
+    void deactivate() throws InterruptedException {
+        deactivateComponent();
+    }
+
+    protected void bindMBeanServer(MBeanServer mbeanServer) {
+        this.mbeanServer.bind(mbeanServer);
+    }
+
+    protected void unbindMBeanServer(MBeanServer mbeanServer) {
+        this.mbeanServer.unbind(mbeanServer);
     }
 
 }
