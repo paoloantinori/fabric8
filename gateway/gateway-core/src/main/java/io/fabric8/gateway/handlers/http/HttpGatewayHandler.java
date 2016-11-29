@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.regex.Pattern;
 
 /**
@@ -208,7 +209,7 @@ public class HttpGatewayHandler implements Handler<HttpServerRequest> {
     }
 
     protected String mappingRulesToJson(Map<String, MappedServices> rules) throws IOException {
-        Map<String, Collection<String>> data = new HashMap<String, Collection<String>>();
+        Map<String, Collection<String>> data = new TreeMap<String, Collection<String>>();
 
         Set<Map.Entry<String, MappedServices>> entries = rules.entrySet();
         for (Map.Entry<String, MappedServices> entry : entries) {

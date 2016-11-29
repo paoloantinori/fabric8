@@ -27,6 +27,7 @@ import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CopyOnWriteArraySet;
 
 import javax.management.MBeanServer;
@@ -167,7 +168,7 @@ public final class FabricHTTPGateway extends AbstractComponent implements HttpGa
     @Override
     public Map<String, MappedServices> getMappedServices() {
         assertValid();
-        Map<String, MappedServices> answer = new HashMap<String, MappedServices>();
+        Map<String, MappedServices> answer = new TreeMap<String, MappedServices>();
         for (HttpMappingRule mappingRuleConfiguration : mappingRuleConfigurations) {
             mappingRuleConfiguration.appendMappedServices(answer);
         }
