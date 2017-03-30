@@ -326,8 +326,12 @@ public class DetectingGateway implements DetectingGatewayMBean {
 
     private void handleConnectFailure(SocketWrapper socket, String reason) {
         if( socketsConnecting.remove(socket) ) {
+            // this log call is inside an if statement since handleConnectFailure() might be invoked multiple times
+            if(LOG.isDebugEnabled()) {
+                LOG.debug("Connection failed. Socket: {}", socket.remoteAddress());
+            }
             if( reason!=null ) {
-                LOG.info(reason);
+                LOG.info("Connection failed. Reason: {}", reason);
             }
             failedConnectionAttempts.incrementAndGet();
             socket.close();
@@ -397,7 +401,7 @@ public class DetectingGateway implements DetectingGatewayMBean {
     /**
      * Creates a new client for the given URL and handler
      */
-    private NetClient createClient(final ConnectionParameters params, final SocketWrapper socketFromClient, final URI url, final Buffer received) {
+    private NetClient   createClient(final ConnectionParameters params, final SocketWrapper socketFromClient, final URI url, final Buffer received) {
         final NetClient netClient = vertx.createNetClient();
         return netClient.connect(url.getPort(), url.getHost(), new Handler<AsyncResult<NetSocket>>() {
             public void handle(final AsyncResult<NetSocket> asyncSocket) {
@@ -406,10 +410,18 @@ public class DetectingGateway implements DetectingGatewayMBean {
                     handleConnectFailure(socketFromClient, String.format("Could not connect to '%s'", url));
                 } else {
                     final NetSocket socketToServer = asyncSocket.result();
-
-                    successfulConnectionAttempts.incrementAndGet();
+                    if(!socketsConnecting.contains(socketFromClient)){
+                        netClient.close();
+                        return;
+                    }else{
+                        successfulConnectionAttempts.incrementAndGet();
+                    }
                     boolean removed = socketsConnecting.remove(socketFromClient);
                     assert removed;
+                    if(!removed){
+                        netClient.close();
+                        return;
+                    }
 
                     final ConnectedSocketInfo connectedInfo = new ConnectedSocketInfo(params, url, socketFromClient, netClient);
                     boolean added = socketsConnected.add(connectedInfo);
