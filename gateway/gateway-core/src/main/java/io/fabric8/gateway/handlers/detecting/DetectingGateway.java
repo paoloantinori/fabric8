@@ -416,18 +416,9 @@ public class DetectingGateway implements DetectingGatewayMBean {
                     handleConnectFailure(socketFromClient, String.format("Could not connect to '%s'", url));
                 } else {
                     final NetSocket socketToServer = asyncSocket.result();
-                    if(!socketsConnecting.contains(socketFromClient)){
-                        netClient.close();
-                        return;
-                    }else{
-                        successfulConnectionAttempts.incrementAndGet();
-                    }
+                    successfulConnectionAttempts.incrementAndGet();
                     boolean removed = socketsConnecting.remove(socketFromClient);
                     assert removed;
-                    if(!removed){
-                        netClient.close();
-                        return;
-                    }
 
                     final ConnectedSocketInfo connectedInfo = new ConnectedSocketInfo(params, url, socketFromClient, netClient);
                     boolean added = socketsConnected.add(connectedInfo);
